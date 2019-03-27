@@ -5,7 +5,7 @@
 
 struct node {
 	int frequency;
-	char* token;
+	char* atoken;
 	struct node *lc;
 	struct node *rc;
 };
@@ -17,4 +17,5 @@ void correctCall(int, char* a[]);
 int buildCB(char*, int);
 char* concatDir(char*, char*);
 void createTokenArray(char**, int);
+void createNodeArray(char*, int);
 //int isTXT(char*);

@@ -1,5 +1,5 @@
 all: fileCompressor.c fileObject.o
-	gcc -g -o fileCompressor fileCompressor.c fileObject.o
+	gcc -g -Wall -o fileCompressor fileCompressor.c fileObject.o
 
 fileObject.o: fileObject.c
 	gcc -c fileObject.c

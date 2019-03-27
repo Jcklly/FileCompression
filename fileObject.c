@@ -9,11 +9,14 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+int tokenCounter = 0;
 
 void correctCall(int argc, char* argv[]) {
 
-	nodeArray = malloc(10*sizeof(*nodeArray));
 
+	nodeArray = malloc(10*sizeof(*nodeArray));
+//	nodeArray[9].frequency = -1;
+	int i = 0;
 
 	if( (argv[1][1]  == 'b') || (argv[2][1] == 'b') ) {	
 		if(argc == 3) {
@@ -30,7 +33,13 @@ void correctCall(int argc, char* argv[]) {
 		printf("Different\n");
 	}
 
-	//printf("%c\n", *argv[2]);
+
+	while(i < tokenCounter) {
+		printf("%s : %d\n", nodeArray[i].atoken, nodeArray[i].frequency);
+		++i;
+	}
+//	printf("%d\n", tokenCounter);
+//	printf("%c\n", *argv[2]);
 }
 
 
@@ -49,7 +58,7 @@ int buildCB(char* s_dir, int flag) {
 		createTokenArray(&s_dir, flag);
 	} else {
 		if( d != NULL ) {
-			
+		
 			struct dirent* status = NULL;
 			status = readdir(d);
 
@@ -84,54 +93,178 @@ int buildCB(char* s_dir, int flag) {
 }
 
 
-	// Given a file or directory, will create an unsorted array of nodes containing tokens and frequency's.
+	// Given a file or directory, will create an array of all tokens contained within the file.
 void createTokenArray(char** file, int flag) {
 //	printf("%s\n", *file);	
 
-	static int num = 0;
-
-//	char* test = "fileObject.h";
+	size_t fileSize;
+	int i, j, count;
+	i = j = count = 0;
+	char buffer;	
 
 	int fd = open(*file, O_RDWR | O_CREAT, 00600);
-
-
-	size_t fileSize;
-	int count = 0;
-	char buffer;
-	char* token;
-
 	off_t cp = lseek(fd, (size_t)0, SEEK_CUR);	
 	fileSize = lseek(fd, (size_t)0, SEEK_END); 
 	lseek(fd, cp, SEEK_SET);
-	
+	char tokenArray[fileSize];
 
 	if (fd == -1) {
 		printf("Error on open: %d\n", errno);
 	}
 		
+
+	i = fileSize;
 	do {
 
 		read(fd, &buffer, 1);
-				
-		if( buffer == '\n' ) {
-			printf("NNNNN");
-		} else {
-			printf("%c", buffer);
-		}
+		tokenArray[j] = buffer;
+		++j;
+		--i;
 
-
-		--fileSize;
-	} while (fileSize > 0);
+	} while (i > 0);
 	close(fd);
+
+	createNodeArray(tokenArray, fileSize);
 
 }
 
+	// Given an arry of tokens, will create the node array with all unique tokens and their respective frequency.
+void createNodeArray(char* tokenArray, int length) {
+
+	int i, j, k;
+	i = j = k = 0;
+	
+		// Used for allocating memory to array, keeping track and expanding memory if needed.
+//	static int tokenCounter = 0;
+	int N = 10;
 
 
+		// Token that will hold substring of main string.
+	int tokenLength = 0;
 
+		// Main tokenizer. Based on pseudo code from assignment documentation	
+	while (i < length) {
+		if ( (tokenArray[i] > 32) && (tokenArray[i] < 127) && (tokenArray[i] != '\t') && (tokenArray[i] != ' ') && (tokenArray[i] != '\n') ) {
+			j = i;
+			while ((j < length) && ( (tokenArray[j] > 32) && (tokenArray[j] < 127) && (tokenArray[j] != '\t') && (tokenArray[j] != ' ') && (tokenArray[j] != '\n') ) ) {	
+				++j;	
+			}
 
+				// Size of individual tokens.
+			tokenLength = (j-i);
+			char token[tokenLength];
+						
+				// Checks if theres enough allocated space for tokens. If reaches max, expands tokens array.
+			if( tokenCounter >= N-1) {
+				N += 10;
+				struct node* temp;
+				temp = realloc(nodeArray, N*sizeof(*nodeArray));
+				if (temp == NULL) {
+					printf("Reallocation Error: Failed to reallocate more memory. Exiting...\n");
+					exit(1);
+				} else {
+					nodeArray = temp;
+				}
+			}
+			
+				// If non-alphabetic character, allocate memory and copy token out. Stores pointer to tokens in array.
+			if( ((tokenArray[j] >= 0)  && (tokenArray[j] <= 32)) || (tokenArray[j] == 127) || (tokenArray[j] == '\t') || (tokenArray[j] == ' ') || (tokenArray[j] == '\n') ) {		
+				
+				memcpy(token, tokenArray+i, tokenLength);
+				(token[tokenLength]) = '\0';
+	
+				k = 0;	
+				while(k < tokenCounter) {
+		
+					if(nodeArray[0].atoken != NULL && nodeArray[k].atoken != NULL) {
+						if( (strcmp(nodeArray[k].atoken, token ) == 0)) {
+							break;
+							
+						}
+					}
+					++k;
+				}	
 
+				if(k == tokenCounter) { 
+					nodeArray[tokenCounter].atoken = malloc(tokenLength);
+					if(nodeArray[tokenCounter].atoken == NULL) {
+						printf("Memory Error: Failed to allocate memory. Exiting...\n");
+						exit(1);
+					}
 
+					strcpy(nodeArray[tokenCounter].atoken, token);
+					nodeArray[tokenCounter].frequency = 1;
+					++tokenCounter;		
+
+				} else {
+					nodeArray[k].frequency += 1;
+				}
+			}
+			i = j;
+		} 
+	
+		char check;
+		char delim[4];
+
+		check = tokenArray[i];
+		switch(check) {
+		case ' ':
+			strcpy(delim, "\\s");	
+			break;
+		case '\t':
+			strcpy(delim, "\\t");
+			break;
+		case '\n':
+			strcpy(delim, "\\n");
+			break;
+		case '\0':
+			strcpy(delim, "\\0");
+			break;
+		case '\r':
+			strcpy(delim, "\\r");
+			break;
+		case '\a':
+			strcpy(delim, "\\a");
+			break;
+		case '\b':
+			strcpy(delim, "\\b");
+			break;
+		case '\f':
+			strcpy(delim, "\\f");
+			break;
+		case '\v':
+			strcpy(delim, "\\v");
+			break;
+		}
+			
+			int p = 0;
+			while(p < tokenCounter) {
+				if(nodeArray[0].atoken != NULL && nodeArray[p].atoken != NULL) {
+					if( (strcmp(nodeArray[p].atoken, delim ) == 0)) {
+						break;
+					}
+				}
+				++p;
+			}
+
+			if(p == tokenCounter) {
+		
+				nodeArray[tokenCounter].atoken = malloc(4);
+				if(nodeArray[tokenCounter].atoken == NULL) {
+					printf("Memory Error: Failed to allocate memory. Exiting...\n");
+					exit(1);	
+				}
+				strcpy(nodeArray[tokenCounter].atoken, delim);
+				nodeArray[tokenCounter].frequency = 1;
+				++tokenCounter;		
+			} else {
+				nodeArray[p].frequency += 1;
+			}
+
+		++i;
+	}	
+
+}
 
 
 	// Used for recurssion. Concats directory strings.
