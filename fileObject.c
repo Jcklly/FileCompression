@@ -33,13 +33,14 @@ void correctCall(int argc, char* argv[]) {
 		printf("Different\n");
 	}
 
-
-	while(i < tokenCounter) {
+		// Prints nodeArray
+/*	while(i < tokenCounter) {
 		printf("%s : %d\n", nodeArray[i].atoken, nodeArray[i].frequency);
 		++i;
 	}
-//	printf("%d\n", tokenCounter);
-//	printf("%c\n", *argv[2]);
+*/
+
+
 }
 
 
@@ -209,7 +210,7 @@ void createNodeArray(char* tokenArray, int length) {
 		check = tokenArray[i];
 		switch(check) {
 		case ' ':
-			strcpy(delim, "\\s");	
+			strcpy(delim, " ");	
 			break;
 		case '\t':
 			strcpy(delim, "\\t");
@@ -285,21 +286,5 @@ char* concatDir(char* original, char* toAdd) {
 
 
 
-
-
-/*	// Checks if given directory is at DT_ file. Returns 1 if yes, 0 if no.
-int isTXT(char* s) {
-
-	int final = 0;
-	char* last = &s[strlen(s)-3];
-
-	if( strcmp(last, "txt") == 0 ) {
-		final = 1;
-	}
-
-	return final;
-	
-}
-*/
 
 
