@@ -10,9 +10,7 @@
 #include <fcntl.h>
 
 /* TO-DO:
- * Sort array of nodes by frequencies, smallest to largest
- * Use sorted array to create huffmann tree
- * Write out to codeBook
+ * Traverse huffman tree and write out to codeBook
 */
 
 
@@ -40,20 +38,40 @@ void correctCall(int argc, char* argv[]) {
 	}
 
 	
-	iSort(1, tokenCounter);
+	iSort(1, tokenCounter, 1);
 
 
 	huffman(tokenCounter);
 
 		// Prints nodeArray
 	while(i < tokenCounter) {
-		printf("%s : %d\n", nodeArray[i].atoken, nodeArray[i].frequency);
+//		printf("%s : %d\n", nodeArray[i].atoken, nodeArray[i].frequency);
 		++i;
 	}
 
+
+/*
 	struct node temp;
-	temp = *nodeArray[tokenCounter].lc;
-	printf("%d\n", temp.frequency);
+	temp = *(nodeArray)[0].rc;
+	printf("%s : %d\n", temp.atoken, temp.frequency);
+
+	struct node temp2;
+	temp2 = *temp.rc;
+	printf("%s : %d\n", temp2.atoken, temp2.frequency);
+
+	struct node temp3;
+	temp3 = *temp2.lc;
+	printf("%s : %d\n", temp3.atoken, temp3.frequency);
+
+	struct node temp4;
+	temp4 = *temp3.rc;
+	printf("%s : %d\n", temp4.atoken, temp4.frequency);
+*/
+
+
+	char a[50];
+//	traverseH(nodeArray[0], a, 0);
+	
 
 }
 
@@ -359,23 +377,24 @@ int sort(int arrayLength) {
 
 
 void huffman(int length) {
-
 	int size = length;
 	int i = 0;
-	while( (tokenCounter != 1) && (tokenCounter!= 0)) {
+	while( (tokenCounter != 1) ) {
 		struct node* temp = malloc(sizeof(*temp));
+		temp->atoken = malloc(sizeof(11));
+		strcpy(temp->atoken, "_NULLNODE_");
 		if(temp == NULL) {
 			printf("oh no\n");
 			exit(0);
 		}
-		temp->lc = (struct node*)malloc(sizeof(*temp));
+		temp->lc = malloc(sizeof(*temp));
 		if(temp->lc == NULL) {
 			printf("oh no\n");
 			exit(0);
 		}
 		*temp->lc = nodeArray[i];
 		if(i+1 <= tokenCounter) {
-			temp->rc = (struct node*)malloc(sizeof(*temp));
+			temp->rc = malloc(sizeof(*temp));
 			if(temp->rc == NULL) {
 				printf("oh no\n");
 				exit(0);
@@ -392,16 +411,23 @@ void huffman(int length) {
 		int f = 2;
 		while( f < j ) {
 
-			nodeArray[f-2] = nodeArray[f];
-			
+			nodeArray[f-2] = nodeArray[f];			
 			++f;		
 		}
 
+
 		--tokenCounter;
 		nodeArray[tokenCounter-1] = *temp;
-		iSort(1, tokenCounter);
+		iSort(1, tokenCounter, 2);
 
 
+
+//		int g = 0;
+//		while(g < tokenCounter) {
+//			printf("%s : %d\n", nodeArray[g].atoken, nodeArray[g].frequency);
+//			++g;
+//		}
+//		printf("\n");
 
 //		--tokenCounter;
 //		i += 2;
@@ -409,12 +435,16 @@ void huffman(int length) {
 //		printf("%d\n", size);
 	}
 
+
+	nodeArray[0].atoken = malloc(9);
+	strcpy(nodeArray[0].atoken, "_ROOTNODE_");
+
 }
 
 
 
 	// Insertion Sort
-void iSort(int start, int length) {
+void iSort(int start, int length, int flag) {
 
 	int i, j;
 	struct node k;
@@ -435,6 +465,34 @@ void iSort(int start, int length) {
 }
 
 
+void traverseH(struct node c, char* a, int step) {
+
+//	int fd = open("HuffmanCodeBook", O_CREAT | O_RDWR, 00600);
+
+		
+	if(c.lc != NULL) {
+		a[step] = '0';
+		traverseH(*c.lc, a, step+1);
+	}	
+
+	if(c.rc != NULL) {
+		a[step] = '1';
+		traverseH(*c.rc, a, step+1);
+	}
+
+	if(c.lc == NULL && c.rc == NULL) {
+		printf("%s : %s\n", c.atoken, a);
+	}
+
+
+
+//	struct node temp;
+//	temp = *c.lc;
+//	printf("%s : %d\n", temp.atoken, temp.frequency);
+
+
+//	close(fd);
+}
 
 
 

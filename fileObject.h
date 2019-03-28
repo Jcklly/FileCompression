@@ -20,6 +20,7 @@ void createTokenArray(char**, int);
 void createNodeArray(char*, int);
 int sortHeapify(int, int);
 int sort(int);
-void iSort(int, int);
+void iSort(int, int, int);
 void huffman(int);
+void traverseH(struct node, char*, int);
 //int isTXT(char*);
