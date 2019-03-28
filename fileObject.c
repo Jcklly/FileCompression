@@ -9,13 +9,19 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-int tokenCounter = 0;
+/* TO-DO:
+ * Sort array of nodes by frequencies, smallest to largest
+ * Use sorted array to create huffmann tree
+ * Write out to codeBook
+*/
 
+
+
+int tokenCounter = 0;
 void correctCall(int argc, char* argv[]) {
 
 
 	nodeArray = malloc(10*sizeof(*nodeArray));
-//	nodeArray[9].frequency = -1;
 	int i = 0;
 
 	if( (argv[1][1]  == 'b') || (argv[2][1] == 'b') ) {	
@@ -33,13 +39,21 @@ void correctCall(int argc, char* argv[]) {
 		printf("Different\n");
 	}
 
+	
+	iSort(1, tokenCounter);
+
+
+	huffman(tokenCounter);
+
 		// Prints nodeArray
-/*	while(i < tokenCounter) {
+	while(i < tokenCounter) {
 		printf("%s : %d\n", nodeArray[i].atoken, nodeArray[i].frequency);
 		++i;
 	}
-*/
 
+	struct node temp;
+	temp = *nodeArray[tokenCounter].lc;
+	printf("%d\n", temp.frequency);
 
 }
 
@@ -195,7 +209,7 @@ void createNodeArray(char* tokenArray, int length) {
 
 					strcpy(nodeArray[tokenCounter].atoken, token);
 					nodeArray[tokenCounter].frequency = 1;
-					++tokenCounter;		
+					++tokenCounter;	
 
 				} else {
 					nodeArray[k].frequency += 1;
@@ -280,6 +294,149 @@ char* concatDir(char* original, char* toAdd) {
 
 	return concat;
 }
+
+
+
+
+	// Heapify function for heapsort algorithm
+int sortHeapify(int size, int mid) {
+	
+		// Position for root, left and right child.
+	int root = mid;
+	int rightChild = 2*mid+2;
+	int leftChild = 2*mid+1;
+	
+		// Check whether left or right child is larger than root	
+	if( (size > leftChild) && (nodeArray[root].frequency > nodeArray[leftChild].frequency) ) {
+		root = leftChild; 
+	}
+	if( (size > rightChild) && (nodeArray[root].frequency <  nodeArray[rightChild].frequency) ) {
+		root = rightChild;
+	}
+	
+		// if root changed, swap root with current value
+	if(root != mid) {
+		struct node temp3 = nodeArray[root];
+		nodeArray[root] = nodeArray[mid];
+		nodeArray[mid] = temp3;
+		sortHeapify(size, root);
+	}
+	
+	return 0;
+}
+
+	// Sorting Function. Given an address to a char** array and array length, applied heapsort algorithm to array!
+int sort(int arrayLength) {
+	
+		// Check to see if there is only 1 element in the array.
+	if( arrayLength == 1 ) {
+		return 0;
+	}
+		// Declare variables
+	
+	int size = arrayLength;
+	
+		// Build the heap
+	int mid = ((arrayLength/2) - 1);
+	while(mid >= 0) {
+		sortHeapify(size, mid);
+		--mid;
+	}
+
+		// Heapify
+	mid = arrayLength - 1;
+	while(mid >= 0) {
+		struct node temp2= nodeArray[0];
+		nodeArray[0] = nodeArray[mid];
+		nodeArray[mid] = temp2;
+		sortHeapify(mid, 0);
+		--mid;
+	}
+
+	return 0;
+}
+
+
+
+void huffman(int length) {
+
+	int size = length;
+	int i = 0;
+	while( (tokenCounter != 1) && (tokenCounter!= 0)) {
+		struct node* temp = malloc(sizeof(*temp));
+		if(temp == NULL) {
+			printf("oh no\n");
+			exit(0);
+		}
+		temp->lc = (struct node*)malloc(sizeof(*temp));
+		if(temp->lc == NULL) {
+			printf("oh no\n");
+			exit(0);
+		}
+		*temp->lc = nodeArray[i];
+		if(i+1 <= tokenCounter) {
+			temp->rc = (struct node*)malloc(sizeof(*temp));
+			if(temp->rc == NULL) {
+				printf("oh no\n");
+				exit(0);
+			}
+			*temp->rc = nodeArray[i+1];
+			temp->frequency = nodeArray[i].frequency + nodeArray[i+1].frequency;
+		} else {
+			temp->frequency = nodeArray[i].frequency;
+		}
+	
+//		printf("%d\n", temp->frequency);
+
+		int j = tokenCounter;
+		int f = 2;
+		while( f < j ) {
+
+			nodeArray[f-2] = nodeArray[f];
+			
+			++f;		
+		}
+
+		--tokenCounter;
+		nodeArray[tokenCounter-1] = *temp;
+		iSort(1, tokenCounter);
+
+
+
+//		--tokenCounter;
+//		i += 2;
+//		size -= 2;	
+//		printf("%d\n", size);
+	}
+
+}
+
+
+
+	// Insertion Sort
+void iSort(int start, int length) {
+
+	int i, j;
+	struct node k;
+
+	i = start;
+	while(i < length) {
+		k = nodeArray[i];
+		j = i-1;
+
+		while( (j >= 0) && (nodeArray[j].frequency > k.frequency)) {
+			nodeArray[j+1] = nodeArray[j];
+			--j;	
+		}
+		nodeArray[j + 1] = k;
+		++i;
+	}
+
+}
+
+
+
+
 
 
 

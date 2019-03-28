@@ -6,8 +6,8 @@
 struct node {
 	int frequency;
 	char* atoken;
-	struct node *lc;
-	struct node *rc;
+	struct node* lc;
+	struct node* rc;
 };
 
 struct node *nodeArray;
@@ -18,4 +18,8 @@ int buildCB(char*, int);
 char* concatDir(char*, char*);
 void createTokenArray(char**, int);
 void createNodeArray(char*, int);
+int sortHeapify(int, int);
+int sort(int);
+void iSort(int, int);
+void huffman(int);
 //int isTXT(char*);
