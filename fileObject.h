@@ -22,5 +22,5 @@ int sortHeapify(int, int);
 int sort(int);
 void iSort(int, int, int);
 void huffman(int);
-void traverseH(struct node, char*, int);
+void traverseH(struct node*, char a[], int);
 //int isTXT(char*);

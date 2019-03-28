@@ -70,8 +70,19 @@ void correctCall(int argc, char* argv[]) {
 
 
 	char a[50];
-//	traverseH(nodeArray[0], a, 0);
+	traverseH(&nodeArray[0], a, 0);
 	
+
+	int fd = open("HuffmanCodeBook", O_CREAT | O_APPEND | O_RDWR, 00600);
+				
+	if (fd == -1) {
+		printf("Error on open: %d\n", errno);
+	}
+		
+	write(fd, "\n", 1);
+	close(fd);
+
+
 
 }
 
@@ -465,33 +476,46 @@ void iSort(int start, int length, int flag) {
 }
 
 
-void traverseH(struct node c, char* a, int step) {
+void traverseH(struct node* c, char a[], int step) {
 
-//	int fd = open("HuffmanCodeBook", O_CREAT | O_RDWR, 00600);
 
-		
-	if(c.lc != NULL) {
+
+	if(c[0].lc != NULL) {
 		a[step] = '0';
-		traverseH(*c.lc, a, step+1);
+		traverseH(c[0].lc, a, step+1);
 	}	
 
-	if(c.rc != NULL) {
+	if(c[0].rc != NULL) {
 		a[step] = '1';
-		traverseH(*c.rc, a, step+1);
+		traverseH(c[0].rc, a, step+1);
 	}
 
-	if(c.lc == NULL && c.rc == NULL) {
-		printf("%s : %s\n", c.atoken, a);
+	if(c[0].lc == NULL && c[0].rc == NULL) {
+		a[step] = '\0';
+//		printf("%s : %s: ", c[0].atoken, a);
+
+//		printf("%d\n", 2 + step + strlen(c[0].atoken));
+		int writeSize = 2 + step + strlen(c[0].atoken);
+
+		char t[writeSize];
+		strcpy(t, c[0].atoken);
+		strcat(t, "\t");
+		strcat(t, a);		
+		strcat(t, "\n");
+
+			// Create and write to HuffmanCodeBook
+		int fd = open("HuffmanCodeBook", O_CREAT | O_APPEND | O_RDWR, 00600);
+				
+		if (fd == -1) {
+			printf("Error on open: %d\n", errno);
+		}
+		
+		write(fd, t, writeSize);
+		close(fd);
+
+
 	}
 
-
-
-//	struct node temp;
-//	temp = *c.lc;
-//	printf("%s : %d\n", temp.atoken, temp.frequency);
-
-
-//	close(fd);
 }
 
 
