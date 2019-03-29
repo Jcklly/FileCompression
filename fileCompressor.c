@@ -10,8 +10,13 @@ int main(int argc, char* argv[]) {
 	}
 
 
-		// Send to another function that will determine correct functions to call for given input
+		// Send to another function that will determine correct functions to call to build the codebook.
 	correctCall(argc, argv);
+
+
+
+
+
 
 return 0;	
 		

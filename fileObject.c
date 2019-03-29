@@ -9,17 +9,12 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-/* TO-DO:
- * Traverse huffman tree and write out to codeBook
-*/
-
-
 
 int tokenCounter = 0;
 void correctCall(int argc, char* argv[]) {
 
 
-	nodeArray = malloc(10*sizeof(*nodeArray));
+	nodeArray = calloc(10, sizeof(*nodeArray));
 	int i = 0;
 
 	if( (argv[1][1]  == 'b') || (argv[2][1] == 'b') ) {	
@@ -41,15 +36,14 @@ void correctCall(int argc, char* argv[]) {
 	iSort(1, tokenCounter, 1);
 
 
-	huffman(tokenCounter);
+ 	huffman(tokenCounter);
 
-		// Prints nodeArray
+/*		// Prints nodeArray
 	while(i < tokenCounter) {
-//		printf("%s : %d\n", nodeArray[i].atoken, nodeArray[i].frequency);
+		printf("%s : %d\n", nodeArray[i].atoken, nodeArray[i].frequency);
 		++i;
 	}
-
-
+*/
 /*
 	struct node temp;
 	temp = *(nodeArray)[0].rc;
@@ -91,7 +85,6 @@ void correctCall(int argc, char* argv[]) {
 
 int buildCB(char* s_dir, int flag) {
 
-	//char* t = ".//dir1/dir2";
 
 	DIR* d = opendir(s_dir);
 	char* newDir;	
@@ -147,15 +140,17 @@ void createTokenArray(char** file, int flag) {
 	char buffer;	
 
 	int fd = open(*file, O_RDWR | O_CREAT, 00600);
+
+	if (fd == -1) {
+//		printf("Error on open: %d\n", errno);
+		close(fd);
+		return;
+	} 
+		
 	off_t cp = lseek(fd, (size_t)0, SEEK_CUR);	
 	fileSize = lseek(fd, (size_t)0, SEEK_END); 
 	lseek(fd, cp, SEEK_SET);
 	char tokenArray[fileSize];
-
-	if (fd == -1) {
-		printf("Error on open: %d\n", errno);
-	}
-		
 
 	i = fileSize;
 	do {
@@ -166,22 +161,25 @@ void createTokenArray(char** file, int flag) {
 		--i;
 
 	} while (i > 0);
+	
 	close(fd);
+	
 
-	createNodeArray(tokenArray, fileSize);
+	int reallocSize = 10;
+	createNodeArray(tokenArray, fileSize, &reallocSize);
 
 }
 
 	// Given an arry of tokens, will create the node array with all unique tokens and their respective frequency.
-void createNodeArray(char* tokenArray, int length) {
+void createNodeArray(char* tokenArray, int length, int* reallocSize) {
 
 	int i, j, k;
 	i = j = k = 0;
 	
 		// Used for allocating memory to array, keeping track and expanding memory if needed.
 //	static int tokenCounter = 0;
-	int N = 10;
-
+	int N = *reallocSize;
+//	printf("%d\n", tokenCounter);
 
 		// Token that will hold substring of main string.
 	int tokenLength = 0;
@@ -196,11 +194,12 @@ void createNodeArray(char* tokenArray, int length) {
 
 				// Size of individual tokens.
 			tokenLength = (j-i);
-			char token[tokenLength];
-						
+			char token[tokenLength + 1];
+		
 				// Checks if theres enough allocated space for tokens. If reaches max, expands tokens array.
 			if( tokenCounter >= N-1) {
-				N += 10;
+				N = tokenCounter + 10;
+				*reallocSize += 10;
 				struct node* temp;
 				temp = realloc(nodeArray, N*sizeof(*nodeArray));
 				if (temp == NULL) {
@@ -215,8 +214,8 @@ void createNodeArray(char* tokenArray, int length) {
 			if( ((tokenArray[j] >= 0)  && (tokenArray[j] <= 32)) || (tokenArray[j] == 127) || (tokenArray[j] == '\t') || (tokenArray[j] == ' ') || (tokenArray[j] == '\n') ) {		
 				
 				memcpy(token, tokenArray+i, tokenLength);
-				(token[tokenLength]) = '\0';
-	
+				token[tokenLength] = '\0';
+					
 				k = 0;	
 				while(k < tokenCounter) {
 		
@@ -230,8 +229,9 @@ void createNodeArray(char* tokenArray, int length) {
 				}	
 
 				if(k == tokenCounter) { 
-					nodeArray[tokenCounter].atoken = malloc(tokenLength);
+					nodeArray[tokenCounter].atoken = malloc(tokenLength + 1);
 					if(nodeArray[tokenCounter].atoken == NULL) {
+
 						printf("Memory Error: Failed to allocate memory. Exiting...\n");
 						exit(1);
 					}
@@ -280,6 +280,20 @@ void createNodeArray(char* tokenArray, int length) {
 			strcpy(delim, "\\v");
 			break;
 		}
+
+				// Checks if theres enough allocated space for tokens. If reaches max, expands tokens array.
+			if( tokenCounter >= N-1) {
+				N = tokenCounter + 10;
+				*reallocSize += 10;
+				struct node* temp;
+				temp = realloc(nodeArray, N*sizeof(*nodeArray));
+				if (temp == NULL) {
+					printf("Reallocation Error: Failed to reallocate more memory. Exiting...\n");
+					exit(1);
+				} else {
+					nodeArray = temp;
+				}
+			}
 			
 			int p = 0;
 			while(p < tokenCounter) {
@@ -292,12 +306,12 @@ void createNodeArray(char* tokenArray, int length) {
 			}
 
 			if(p == tokenCounter) {
-		
-				nodeArray[tokenCounter].atoken = malloc(4);
+				nodeArray[tokenCounter].atoken = (char*)malloc(4);
 				if(nodeArray[tokenCounter].atoken == NULL) {
 					printf("Memory Error: Failed to allocate memory. Exiting...\n");
 					exit(1);	
 				}
+	
 				strcpy(nodeArray[tokenCounter].atoken, delim);
 				nodeArray[tokenCounter].frequency = 1;
 				++tokenCounter;		
@@ -392,7 +406,7 @@ void huffman(int length) {
 	int i = 0;
 	while( (tokenCounter != 1) ) {
 		struct node* temp = malloc(sizeof(*temp));
-		temp->atoken = malloc(sizeof(11));
+		temp->atoken = malloc(11*sizeof(char));
 		strcpy(temp->atoken, "_NULLNODE_");
 		if(temp == NULL) {
 			printf("oh no\n");
@@ -446,8 +460,8 @@ void huffman(int length) {
 //		printf("%d\n", size);
 	}
 
-
-	nodeArray[0].atoken = malloc(9);
+	free(nodeArray[0].atoken);
+	nodeArray[0].atoken = malloc(9*sizeof(char));
 	strcpy(nodeArray[0].atoken, "_ROOTNODE_");
 
 }
@@ -514,6 +528,9 @@ void traverseH(struct node* c, char a[], int step) {
 		close(fd);
 
 
+			// Free the token and the node.
+		free(c[0].atoken);
+		free(c);
 	}
 
 }
