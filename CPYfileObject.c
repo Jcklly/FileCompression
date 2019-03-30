@@ -83,10 +83,10 @@ int buildCB(char* s_dir, int flag, int type) {
 		// Checks if -R flag is in input.
 	if( flag == 0 ) {
 		if(type == 0) {
-			createTokenArray(&s_dir, type);
+			createTokenArray(&s_dir, flag);
 		} else if(type == 1) {
 
-			createTokenArray(&s_dir, type); // send file to compress
+			compress(&s_dir, s_dir); // send file to compress
 		} else {
 			; // send to file decompress
 		}
@@ -101,7 +101,13 @@ int buildCB(char* s_dir, int flag, int type) {
 //				printf("%s\n", fullDir);
 
 				if( status->d_type == DT_REG ) {
-					createTokenArray(&fullDir, type);
+					if(type == 0) {
+						createTokenArray(&fullDir, flag);
+					} else if(type == 1) {
+						compress(&fullDir, status->d_name); // send to file compress
+					} else {
+						; // send to file decompress
+					}
 				} else {
 					;
 				}
@@ -158,19 +164,13 @@ void createTokenArray(char** file, int flag) {
 	} while (i > 0);
 	
 	close(fd);
-
-	if( flag == 0 ) {
-		createNodeArray(tokenArray, fileSize, 0);
-	} else {
-		compress(tokenArray, fileSize, *file);
-	}
 	
+	createNodeArray(tokenArray, fileSize);
+
 }
 
 	// Given an arry of tokens, will create the node array with all unique tokens and their respective frequency.
-	// flag = 0 -> createNode array
-	// flag = 1 -> simply return token
-void createNodeArray(char* tokenArray, int length, int flag) {
+void createNodeArray(char* tokenArray, int length) {
 
 	int i, j, k;
 	i = j = k = 0;
@@ -181,7 +181,7 @@ void createNodeArray(char* tokenArray, int length, int flag) {
 		// Token that will hold substring of main string.
 	int tokenLength = 0;
 
-		// Main tokenizer	
+		// Main tokenizer. Based on pseudo code from assignment documentation	
 	while (i < length) {
 		if ( (tokenArray[i] > 32) && (tokenArray[i] < 127) && (tokenArray[i] != '\t') && (tokenArray[i] != ' ') && (tokenArray[i] != '\n') ) {
 			j = i;
@@ -193,29 +193,25 @@ void createNodeArray(char* tokenArray, int length, int flag) {
 			tokenLength = (j-i);
 			char token[tokenLength + 1];
 		
-			if( flag == 0 ) {
-
-					// Checks if theres enough allocated space for tokens. If reaches max, expands tokens array.
-				if( tokenCounter >= N-1) {
-					N = tokenCounter + 10;
-					struct node* temp;
-					temp = realloc(nodeArray, N*sizeof(*nodeArray));
-					if (temp == NULL) {
-						printf("Reallocation Error: Failed to reallocate more memory. Exiting...\n");
-						exit(1);
-					} else {
-						nodeArray = temp;
-					}
+				// Checks if theres enough allocated space for tokens. If reaches max, expands tokens array.
+			if( tokenCounter >= N-1) {
+				N = tokenCounter + 10;
+				struct node* temp;
+				temp = realloc(nodeArray, N*sizeof(*nodeArray));
+				if (temp == NULL) {
+					printf("Reallocation Error: Failed to reallocate more memory. Exiting...\n");
+					exit(1);
+				} else {
+					nodeArray = temp;
 				}
 			}
+			
 				// If non-alphabetic character, allocate memory and copy token out. Stores pointer to tokens in array.
 			if( ((tokenArray[j] >= 0)  && (tokenArray[j] <= 32)) || (tokenArray[j] == 127) || (tokenArray[j] == '\t') || (tokenArray[j] == ' ') || (tokenArray[j] == '\n') ) {		
 				
 				memcpy(token, tokenArray+i, tokenLength);
 				token[tokenLength] = '\0';
-				
 					
-
 				k = 0;	
 				while(k < tokenCounter) {
 		
@@ -281,10 +277,6 @@ void createNodeArray(char* tokenArray, int length, int flag) {
 			break;
 		}
 
-			if( flag == 1 ) {
-				printf("%s\n", delim);
-			} else {
-
 				// Checks if theres enough allocated space for tokens. If reaches max, expands tokens array.
 			if( tokenCounter >= N-1) {
 				N = tokenCounter + 10;
@@ -321,9 +313,10 @@ void createNodeArray(char* tokenArray, int length, int flag) {
 			} else {
 				nodeArray[p].frequency += 1;
 			}
-		}
+
 		++i;
 	}	
+
 }
 
 
@@ -440,9 +433,9 @@ void traverseH(struct node* c, char a[], int step) {
 		int writeSize = 2 + step + strlen(c[0].atoken);
 
 		char t[writeSize];
-		strcpy(t, a);
+		strcpy(t, c[0].atoken);
 		strcat(t, "\t");
-		strcat(t, c[0].atoken);		
+		strcat(t, a);		
 		strcat(t, "\n");
 
 			// Create and write to HuffmanCodeBook
@@ -457,31 +450,29 @@ void traverseH(struct node* c, char a[], int step) {
 
 
 			// Free the token and the node.
-//		free(c[0].atoken);
-//		free(c);
+		free(c[0].atoken);
+		free(c);
 	}
 
 }
 
 
-
-int compare(char* s1, char* s2) {
-
+void compress(char** file, char* name) {
 	
 
-}
+	char cFile[strlen(*file) + 5];
+	strcpy(cFile, *file);
+	strcat(cFile, ".hcz");
 
-
-void compress(char* tokenArray, int length, char* file) {
-
-
+	
+	
 
 	size_t fileSize;
-	int o, p;
-	o = p = 0;
+	int i, j, count;
+	i = j = count = 0;
 	char buffer;	
 
-	int fd = open("HuffmanCodeBook", O_RDWR, 00600);
+	int fd = open(*file, O_RDWR | O_APPEND, 00600);
 
 	if (fd == -1) {
 		close(fd);
@@ -491,269 +482,39 @@ void compress(char* tokenArray, int length, char* file) {
 	off_t cp = lseek(fd, (size_t)0, SEEK_CUR);	
 	fileSize = lseek(fd, (size_t)0, SEEK_END); 
 	lseek(fd, cp, SEEK_SET);
-	char huffmanArray[fileSize];
+	char tokenArray[fileSize];
 
-	o = fileSize;
+	i = fileSize;
 	do {
 
 		read(fd, &buffer, 1);
-		
-/*		if( buffer == '\t' ) {
-			mid = p;
-//			printf("%d\n", mid);
-		}
-		if( buffer == '\n' ) {
-			last = p;
-//			printf("%d\n", last);
-		}
+		tokenArray[j] = buffer;
+		++j;
+		--i;
 
-		if(last-mid > 0) {
-			if(p <= last) { printf("%d", p); }
-			printf(" \t%d - %d = %d\n", last, mid, last-mid);
-		}
-*/
-		huffmanArray[p] = buffer;
-		++p;
-		--o;
-
-	} while (o > 0);
+	} while (i > 0);
+	
 	close(fd);
-
-
-
-
-
-
-
-	int i, j, k;
-	i = j = k = 0;
 	
-		// Used for allocating memory to array, keeping track and expanding memory if needed.
-	int N = 10;
-
-		// Token that will hold substring of main string.
-	int tokenLength = 0;
-
-		// Main tokenizer	
-	while (i < length) {
-		if ( (tokenArray[i] > 32) && (tokenArray[i] < 127) && (tokenArray[i] != '\t') && (tokenArray[i] != ' ') && (tokenArray[i] != '\n') ) {
-			j = i;
-			while ((j < length) && ( (tokenArray[j] > 32) && (tokenArray[j] < 127) && (tokenArray[j] != '\t') && (tokenArray[j] != ' ') && (tokenArray[j] != '\n') ) ) {	
-				++j;	
-			}
-
-				// Size of individual tokens.
-			tokenLength = (j-i);
-			char token[tokenLength + 1];
-		
-				// If non-alphabetic character, allocate memory and copy token out. Stores pointer to tokens in array.
-			if( ((tokenArray[j] >= 0)  && (tokenArray[j] <= 32)) || (tokenArray[j] == 127) || (tokenArray[j] == '\t') || (tokenArray[j] == ' ') || (tokenArray[j] == '\n') ) {		
-				
-				memcpy(token, tokenArray+i, tokenLength);
-				token[tokenLength] = '\0';
-				
+	tokenArray[fileSize] = '\0';
+	printf("%s\n", tokenArray);
 
 
-
-
-			
-				int first, mid, last;
-				first = mid = last = o = p = 0;
-				char buffer;	
-
-				int fd = open("HuffmanCodeBook", O_RDWR | O_APPEND, 00600);
-
-				if (fd == -1) {
-					close(fd);
-					return;
-				} 
-					
-				o = fileSize;
-		
-				do {
-
-					read(fd, &buffer, 1);
-					
-					if( buffer == '\t' ) {
-						mid = p;
-					}
-					if( buffer == '\n' ) {
-						last = p;
-					}
-			
-
-					if(last-mid > 0) {
-						if(p <= last) {
-//							printf("%d  %d  %d\n", first, mid, last);
-							char token2[last-mid];
-							int tbSize = mid-first+1;
-							char tokenBit[tbSize];
-							memcpy(tokenBit, huffmanArray+first, mid-first);
-							tokenBit[mid-first] = '\0';
-
-							if(p+1 < fileSize-1) {
-								first = p+1;
-							}
-						
-							memcpy(token2, huffmanArray+mid+1, last-mid-1);
-							token2[last-mid-1] = '\0';
-							
-//							printf("%s  %s\n", tokenBit, token2);
-							
-							if(strcmp(token, token2) == 0) {
-//								printf("SAME: %s = %s | %s\n", token, token2, tokenBit);								
-
-								char newFile[strlen(file) + 4];
-								strcpy(newFile, file);
-								strcat(newFile, ".hcz");
-
-								int fdr = open(newFile, O_CREAT | O_APPEND | O_RDWR, 00600);
-										
-								if (fdr == -1) {
-									return;
-								}
-							
-//								printf("%s : %d\n", tokenBit, tbSize);	
-								write(fdr, tokenBit, tbSize-1);
-								close(fdr);
-	
-								break;
-							}
-
-						}
-					}
-
-					++p;
-					--o;
-
-				} while (o > 0);
-				close(fd);
-
-			}
-			i = j;
-		} 
-	
-		char check;
-		char delim[4];
-
-		check = tokenArray[i];
-		switch(check) {
-		case ' ':
-			strcpy(delim, " ");	
-			break;
-		case '\t':
-			strcpy(delim, "\\t");
-			break;
-		case '\n':
-			strcpy(delim, "\\n");
-			break;
-		case '\0':
-			strcpy(delim, "\\0");
-			break;
-		case '\r':
-			strcpy(delim, "\\r");
-			break;
-		case '\a':
-			strcpy(delim, "\\a");
-			break;
-		case '\b':
-			strcpy(delim, "\\b");
-			break;
-		case '\f':
-			strcpy(delim, "\\f");
-			break;
-		case '\v':
-			strcpy(delim, "\\v");
-			break;
-		}
-
-	
-		
-			
-				int first, mid, last;
-				first = mid = last = o = p = 0;
-				char buffer;	
-
-				int fd = open("HuffmanCodeBook", O_RDWR | O_APPEND, 00600);
-
-				if (fd == -1) {
-					close(fd);
-					return;
-				} 
-					
-				o = fileSize;
-		
-				do {
-
-					read(fd, &buffer, 1);
-					
-					if( buffer == '\t' ) {
-						mid = p;
-					}
-					if( buffer == '\n' ) {
-						last = p;
-					}
-			
-
-					if(last-mid > 0) {
-						if(p <= last) {
-//							printf("%d  %d  %d\n", first, mid, last);
-							char token2[last-mid];
-							int tbSize = mid-first+1;
-							char tokenBit[tbSize];
-							memcpy(tokenBit, huffmanArray+first, mid-first);
-							tokenBit[mid-first] = '\0';
-
-							if(p+1 < fileSize-1) {
-								first = p+1;
-							}
-						
-							memcpy(token2, huffmanArray+mid+1, last-mid-1);
-							token2[last-mid-1] = '\0';
-							
-//							printf("%s  %s\n", tokenBit, token2);
-							
-							if(strcmp(delim, token2) == 0) {
-//								printf("SAME: %s = %s | %s\n", delim, token2, tokenBit);								
-
-								char newFile[strlen(file) + 4];
-								strcpy(newFile, file);
-								strcat(newFile, ".hcz");
-
-								int fdr = open(newFile, O_CREAT | O_APPEND | O_RDWR, 00600);
-										
-								if (fdr == -1) {
-									return;
-								}
-							
-//								printf("%s : %d\n", tokenBit, tbSize);	
-								write(fdr, tokenBit, tbSize-1);
-								close(fdr);
-	
-								break;							
-							}
-
-						}
-					}
-
-					++p;
-					--o;
-
-				} while (o > 0);
-				close(fd);
-
-
-
-			
-		++i;
-	}
-	
-
-
-
-
-
+//	int fd = open(cFile, O_RDWR | O_CREAT | O_APPEND, 00600);
+//	close(fd);
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
