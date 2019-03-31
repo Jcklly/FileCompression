@@ -761,6 +761,12 @@ void decompress(char* tokenArray, int length, char* file) {
 	strcat(newFile, ".hcz");
 
 
+
+	char fileTemp[strlen(file)+5];
+	strcpy(fileTemp, file);
+	strcat(fileTemp, "TEMP");
+
+
 	int first, mid, last, o, p, i, bitPlace, fileSize;
 	o = p = i = fileSize = bitPlace =0;
 	char buffer;	
@@ -897,20 +903,19 @@ void decompress(char* tokenArray, int length, char* file) {
 
 						}
 
-						int fdr = open("./dir1/testDecompressed.txt", O_CREAT | O_APPEND | O_RDWR, 00600);
+						int fdr = open(fileTemp, O_CREAT | O_APPEND | O_RDWR, 00600);
 								
 						if (fdr == -1) {
+							printf("ERROR\n");
 							return;
 						}
 					
-//						printf("%s : %d\n", tokenBit, tbSize);	
 						if(s == 1) {
 							write(fdr, &delim, 1);
 						} else {
 							write(fdr, token2, last-mid-1);
 						}
 						close(fdr);
-
 
 						bitPlace += test;
 						int clear = 0;
@@ -938,85 +943,21 @@ void decompress(char* tokenArray, int length, char* file) {
 		}
 	}
 
-//	printf("%s\n", tokenArray);
+
+		// Created temp file to decompress. This deletes the original and replaces it with the new decompressed file.
+	int remov = remove(file);
+	if(remov != 0) {
+		fprintf(stderr, "Error decompressing file: %s\n", file);
+		exit(1);
+	}
+
+	int renam = rename(fileTemp, file);
+	if(renam != 0) {
+		fprintf(stderr, "Error decompressing file: %s\n", file);
+		exit(1);
+	}
+
 
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	// Heapify function for heapsort algorithm
-int sortHeapify(int size, int mid) {
-	
-		// Position for root, left and right child.
-	int root = mid;
-	int rightChild = 2*mid+2;
-	int leftChild = 2*mid+1;
-	
-		// Check whether left or right child is larger than root	
-	if( (size > leftChild) && (nodeArray[root].frequency > nodeArray[leftChild].frequency) ) {
-		root = leftChild; 
-	}
-	if( (size > rightChild) && (nodeArray[root].frequency <  nodeArray[rightChild].frequency) ) {
-		root = rightChild;
-	}
-	
-		// if root changed, swap root with current value
-	if(root != mid) {
-		struct node temp3 = nodeArray[root];
-		nodeArray[root] = nodeArray[mid];
-		nodeArray[mid] = temp3;
-		sortHeapify(size, root);
-	}
-	
-	return 0;
-}
-
-	// Sorting Function. Given an address to a char** array and array length, applied heapsort algorithm to array!
-int sort(int arrayLength) {
-	
-		// Check to see if there is only 1 element in the array.
-	if( arrayLength == 1 ) {
-		return 0;
-	}
-		// Declare variables
-	
-	int size = arrayLength;
-	
-		// Build the heap
-	int mid = ((arrayLength/2) - 1);
-	while(mid >= 0) {
-		sortHeapify(size, mid);
-		--mid;
-	}
-
-		// Heapify
-	mid = arrayLength - 1;
-	while(mid >= 0) {
-		struct node temp2= nodeArray[0];
-		nodeArray[0] = nodeArray[mid];
-		nodeArray[mid] = temp2;
-		sortHeapify(mid, 0);
-		--mid;
-	}
-
-	return 0;
-}
