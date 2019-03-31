@@ -24,7 +24,7 @@ void iSort(int, int, int);
 void huffman(int);
 void traverseH(struct node*, char a[], int);
 void compress(char*, int, char*);
-int compare(char*, char*);
+void decompress(char*, int, char*);
 
 
 

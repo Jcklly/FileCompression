@@ -42,8 +42,22 @@ void correctCall(int argc, char* argv[]) {
 			fprintf(stderr, "Invalid number of inputs.\n");
 			exit(1);
 		}
+	} else if( (argv[1][1] == 'd') || (argv[2][1] == 'd') ) {
+		if(argc == 3) {
+			buildCB(argv[2], 0, 2);
+			code = 3;
+		} else if(argc == 4) {
+			buildCB(argv[3], 1, 2);
+			code = 3;
+		} else {
+			fprintf(stderr, "Invalid number of inputs.\n");
+			exit(1);
+		}
+
 	} else {
-		printf("Different\n");
+
+			fprintf(stderr, "Invalid number of inputs.\n");
+			exit(1);
 	}
 
 	
@@ -82,14 +96,7 @@ int buildCB(char* s_dir, int flag, int type) {
 
 		// Checks if -R flag is in input.
 	if( flag == 0 ) {
-		if(type == 0) {
-			createTokenArray(&s_dir, type);
-		} else if(type == 1) {
-
-			createTokenArray(&s_dir, type); // send file to compress
-		} else {
-			; // send to file decompress
-		}
+		createTokenArray(&s_dir, type);
 	} else {
 		if( d != NULL ) {
 
@@ -134,8 +141,18 @@ void createTokenArray(char** file, int flag) {
 	int i, j, count;
 	i = j = count = 0;
 	char buffer;	
+	
+	int fd;
 
-	int fd = open(*file, O_RDWR | O_CREAT, 00600);
+	if(flag == 0 || flag == 1) {
+		fd = open(*file, O_RDWR, 00600);
+	} else {
+		char temp[strlen(*file) + 4];
+		strcpy(temp, *file);
+		strcat(temp, ".hcz");
+		fd = open(temp, O_RDWR, 00600);
+	
+	}
 
 	if (fd == -1) {
 		close(fd);
@@ -159,10 +176,14 @@ void createTokenArray(char** file, int flag) {
 	
 	close(fd);
 
+	tokenArray[j] = '\0';
+
 	if( flag == 0 ) {
 		createNodeArray(tokenArray, fileSize, 0);
-	} else {
+	} else if( flag == 1 ) {
 		compress(tokenArray, fileSize, *file);
+	} else {
+		decompress(tokenArray, fileSize, *file);
 	}
 	
 }
@@ -248,36 +269,36 @@ void createNodeArray(char* tokenArray, int length, int flag) {
 		} 
 	
 		char check;
-		char delim[4];
+		char delim[5];
 
 		check = tokenArray[i];
 		switch(check) {
 		case ' ':
-			strcpy(delim, " ");	
+			strcpy(delim, "  ");	
 			break;
 		case '\t':
-			strcpy(delim, "\\t");
+			strcpy(delim, "\\t ");
 			break;
 		case '\n':
-			strcpy(delim, "\\n");
+			strcpy(delim, "\\n ");
 			break;
 		case '\0':
-			strcpy(delim, "\\0");
+			strcpy(delim, "\\0 ");
 			break;
 		case '\r':
-			strcpy(delim, "\\r");
+			strcpy(delim, "\\r ");
 			break;
 		case '\a':
-			strcpy(delim, "\\a");
+			strcpy(delim, "\\a ");
 			break;
 		case '\b':
-			strcpy(delim, "\\b");
+			strcpy(delim, "\\b ");
 			break;
 		case '\f':
-			strcpy(delim, "\\f");
+			strcpy(delim, "\\f ");
 			break;
 		case '\v':
-			strcpy(delim, "\\v");
+			strcpy(delim, "\\v ");
 			break;
 		}
 
@@ -309,7 +330,7 @@ void createNodeArray(char* tokenArray, int length, int flag) {
 			}
 
 			if(p == tokenCounter) {
-				nodeArray[tokenCounter].atoken = (char*)malloc(4);
+				nodeArray[tokenCounter].atoken = (char*)malloc(5);
 				if(nodeArray[tokenCounter].atoken == NULL) {
 					printf("Memory Error: Failed to allocate memory. Exiting...\n");
 					exit(1);	
@@ -464,17 +485,7 @@ void traverseH(struct node* c, char a[], int step) {
 }
 
 
-
-int compare(char* s1, char* s2) {
-
-	
-
-}
-
-
 void compress(char* tokenArray, int length, char* file) {
-
-
 
 	size_t fileSize;
 	int o, p;
@@ -518,10 +529,6 @@ void compress(char* tokenArray, int length, char* file) {
 
 	} while (o > 0);
 	close(fd);
-
-
-
-
 
 
 
@@ -634,42 +641,40 @@ void compress(char* tokenArray, int length, char* file) {
 		} 
 	
 		char check;
-		char delim[4];
+		char delim[5];
 
 		check = tokenArray[i];
 		switch(check) {
 		case ' ':
-			strcpy(delim, " ");	
+			strcpy(delim, "  ");	
 			break;
 		case '\t':
-			strcpy(delim, "\\t");
+			strcpy(delim, "\\t ");
 			break;
 		case '\n':
-			strcpy(delim, "\\n");
+			strcpy(delim, "\\n ");
 			break;
 		case '\0':
-			strcpy(delim, "\\0");
+			strcpy(delim, "\\0 ");
 			break;
 		case '\r':
-			strcpy(delim, "\\r");
+			strcpy(delim, "\\r ");
 			break;
 		case '\a':
-			strcpy(delim, "\\a");
+			strcpy(delim, "\\a ");
 			break;
 		case '\b':
-			strcpy(delim, "\\b");
+			strcpy(delim, "\\b ");
 			break;
 		case '\f':
-			strcpy(delim, "\\f");
+			strcpy(delim, "\\f ");
 			break;
 		case '\v':
-			strcpy(delim, "\\v");
+			strcpy(delim, "\\v ");
 			break;
 		}
 
-	
-		
-			
+				
 				int first, mid, last;
 				first = mid = last = o = p = 0;
 				char buffer;	
@@ -711,8 +716,7 @@ void compress(char* tokenArray, int length, char* file) {
 							memcpy(token2, huffmanArray+mid+1, last-mid-1);
 							token2[last-mid-1] = '\0';
 							
-//							printf("%s  %s\n", tokenBit, token2);
-							
+//							printf("%s  %s\n", delim, token2);
 							if(strcmp(delim, token2) == 0) {
 //								printf("SAME: %s = %s | %s\n", delim, token2, tokenBit);								
 
@@ -747,13 +751,203 @@ void compress(char* tokenArray, int length, char* file) {
 			
 		++i;
 	}
+}	
+
+
+void decompress(char* tokenArray, int length, char* file) {
+
+	char newFile[strlen(file) + 4];
+	strcpy(newFile, file);
+	strcat(newFile, ".hcz");
+
+
+	int first, mid, last, o, p, i, bitPlace, fileSize;
+	o = p = i = fileSize = bitPlace =0;
+	char buffer;	
+
+	int fd = open("HuffmanCodeBook", O_RDWR | O_APPEND, 00600);
+
+	if (fd == -1) {
+		close(fd);
+		return;
+	} 
+		
+	off_t cp = lseek(fd, (size_t)0, SEEK_CUR);	
+	fileSize = lseek(fd, (size_t)0, SEEK_END); 
+	lseek(fd, cp, SEEK_SET);
+	char huffmanArray[fileSize];
+
+	o = fileSize;
+	do {
+
+		read(fd, &buffer, 1);
+		huffmanArray[p] = buffer;
+		++p;
+		--o;
+
+	} while (o > 0);
+	close(fd);
+
+
 	
 
 
 
+	first = mid = last = o = p = 0;	
 
+	int booli = 0;
+	int test = 0;
+	while(i < length) {
+
+//		printf("%d\n", i);
+
+		fd = open("HuffmanCodeBook", O_RDWR | O_APPEND, 00600);
+
+		if (fd == -1) {
+			close(fd);
+			return;
+		} 
+
+		o = fileSize;
+		mid = 0;
+		first = 0;
+		last = 0;
+		p = 0;
+
+		do {
+
+			read(fd, &buffer, 1);
+
+			if( buffer == '\t' ) {
+				mid = p;
+			}
+			if( buffer == '\n' ) {
+				last = p;
+			}
+
+			if(last-mid > 0) {
+				if(p <= last) {
+//					printf("%d  %d  %d\n", first, mid, last);
+					char token2[last-mid];
+					int tbSize = mid-first+1;
+					char tokenBit[tbSize];
+					memcpy(tokenBit, huffmanArray+first, mid-first);
+					tokenBit[mid-first] = '\0';
+
+					if(p+1 < fileSize-1) {
+						first = p+1;
+					}
+				
+					memcpy(token2, huffmanArray+mid+1, last-mid-1);
+					token2[last-mid-1] = '\0';
+
+//					printf("%s : %s\n", token2, tokenBit);
+				
+							
+					char bits[length];
+					bits[test] = tokenArray[i];	
+					bits[test+1] = '\0';				
+					
+//					printf("%d\n", test);
+//					printf("%s ==== %s\n", bits, tokenBit);
+
+					if( strcmp(bits, tokenBit) == 0) {
+//						printf("%s = %s = %s\n", bits, tokenBit, token2);
+						int s = 0;
+						char delim;
+						if(token2[strlen(token2)-1] == ' ') {
+							
+							char ch = token2[strlen(token2)-2];
+
+							switch(ch) {
+							case ' ':
+								delim = ' ';	
+								break;
+							case 't':
+								delim = '\t';
+								break;
+							case 'n':
+								delim = '\n';
+								break;
+							case '0':
+								delim = '\0';
+								break;
+							case 'r':
+								delim = '\r';
+								break;
+							case 'a':
+								delim = '\a';
+								break;
+							case 'b':
+								delim = '\b';
+								break;
+							case 'f':
+								delim = '\f';
+								break;
+							case 'v':
+								delim = '\v';
+								break;
+							}
+
+							s = 1;
+
+
+
+
+
+						}
+
+						int fdr = open("./dir1/dir1file2TEST.txt", O_CREAT | O_APPEND | O_RDWR, 00600);
+								
+						if (fdr == -1) {
+							return;
+						}
+					
+//						printf("%s : %d\n", tokenBit, tbSize);	
+						if(s == 1) {
+							printf("Writing Control: %c\n", delim);
+							write(fdr, &delim, 1);
+						} else {
+							printf("Writing Token: %s\n", token2);
+							write(fdr, token2, last-mid-1);
+						}
+						close(fdr);
+
+
+						bitPlace += test;
+						int clear = 0;
+						while(clear < length) {
+							bits[clear] = '\0';
+							++clear;
+						}
+						booli = 1;
+						break;	
+					}
+				}
+			}
+
+			++p;
+			--o;
+
+		} while (o > 0);
+		close(fd);
+		++i;
+		if(booli == 1) {
+			test = 0;
+			booli = 0;
+		} else {
+			++test;
+		}
+	}
+
+//	printf("%s\n", tokenArray);
 
 }
+
+
+
+
+
 
 
 
