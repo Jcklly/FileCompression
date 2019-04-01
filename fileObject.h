@@ -12,17 +12,26 @@ struct node {
 
 struct node *nodeArray;
 
+struct codeBook {
+	char* atoken;
+	char* bitSeq;
+};
+
+
+
+
+
 	// Function Definitions
-void correctCall(int, char* a[]);
-int buildCB(char*, int, int);
+void correctCall(int, char** a);
+int buildCB(char*, int, int, char*);
 char* concatDir(char*, char*);
-void createTokenArray(char**, int);
+void createTokenArray(char**, int, char*);
 void createNodeArray(char*, int, int);
 void iSort(int, int, int);
 void huffman(int);
 void traverseH(struct node*, char a[], int);
-void compress(char*, int, char*);
-void decompress(char*, int, char*);
-
-
-
+void compress(char*, int, char*, char*);
+void decompress(char*, int, char*, char*);
+int contains(char*);
+void deleteHCZ(char*, int);
+void arguments(char**, int);
