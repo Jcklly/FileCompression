@@ -14,7 +14,7 @@ Capable of compressing/decompressing a single file or recursively traversing dir
      - `c` : compresses
      - `d` : decompresses
      - `R` : recursive mode
-** Note: the `b` flag must be used before the c and d flag. (You must build the codebook of the file or directory before compressing/decompressing it)**
+** Note: the `b` flag must be used before the c and d flag. (You must build the codebook of the file or directory before compressing/decompressing it)
 - Examples:
   - `./fileCompressor -R -b ./` will build the codebook for all files/directories in your current project.
   - `./fileCompressor -b file1.txt` will build the codebook for `file1.txt`
